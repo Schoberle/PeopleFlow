@@ -1,0 +1,145 @@
+.sidebar {
+  width: 240px;
+  min-width: 240px;
+  min-height: 100vh;
+
+  background-color: #2f3640;
+  color: white;
+
+  padding: 32px 18px;
+
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+}
+
+/* =========================
+   LOGO
+========================= */
+
+.logo {
+  padding: 0 12px;
+  margin-bottom: 45px;
+}
+
+.logo h2 {
+  margin: 0;
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* =========================
+   MENU
+========================= */
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.menu button {
+  width: 100%;
+
+  background: transparent;
+  border: none;
+
+  color: #ffffff;
+
+  padding: 13px 14px;
+
+  text-align: left;
+
+  font-size: 15px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  border-radius: 8px;
+
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.menu button:hover {
+  background-color: #414b57;
+}
+
+.menu button:active {
+  transform: scale(0.98);
+}
+
+/* =========================
+   RESPONSIVIDADE
+========================= */
+
+@media (max-width: 900px) {
+  .sidebar {
+    width: 210px;
+    min-width: 210px;
+    padding: 28px 14px;
+  }
+
+  .logo {
+    margin-bottom: 35px;
+  }
+
+  .logo h2 {
+    font-size: 22px;
+  }
+
+  .menu button {
+    font-size: 14px;
+    padding: 12px;
+  }
+}
+
+/* =========================
+   CELULAR
+========================= */
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: relative;
+
+    width: 100%;
+    min-width: 100%;
+    min-height: auto;
+
+    padding: 18px;
+
+    flex-direction: row;
+    align-items: center;
+
+    gap: 20px;
+  }
+
+  .logo {
+    margin: 0;
+    padding: 0;
+  }
+
+  .logo h2 {
+    font-size: 20px;
+  }
+
+  .menu {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 6px;
+  }
+
+  .menu button {
+    width: auto;
+    white-space: nowrap;
+    padding: 10px 12px;
+  }
+}
