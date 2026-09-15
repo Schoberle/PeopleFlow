@@ -15,7 +15,7 @@ function Colaboradores() {
     async function buscarColaboradores() {
       try {
         const resposta = await fetch(
-          "http://localhost:3001/colaboradores"
+          "/api/colaboradores"
         );
 
         if (!resposta.ok) {
