@@ -13,10 +13,7 @@ function Colaborador() {
   useEffect(() => {
     async function buscarColaborador() {
       try {
-        const resposta = await fetch(
-          `"/api/colaboradores"/${id}`
-        );
-
+        const resposta = await fetch(`/api/colaboradores/${id}`);
         if (!resposta.ok) {
           throw new Error("Colaborador não encontrado.");
         }
