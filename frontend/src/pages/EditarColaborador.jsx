@@ -76,7 +76,7 @@ function EditarColaborador() {
 
     try {
       const resposta = await fetch(
-        `http://localhost:3001/colaboradores/${id}`,
+        `/api/colaboradores/${id}`,
         {
           method: "PUT",
           headers: {
