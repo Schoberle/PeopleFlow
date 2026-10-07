@@ -214,6 +214,40 @@ app.put("/colaboradores/:id", async (req, res) => {
   }
 });
 
+// Desligar colaborador
+app.put("/colaboradores/:id/desligar", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const resultado = await pool.query(
+      `UPDATE colaboradores
+       SET
+         status = 'Desligado',
+         data_desligamento = CURRENT_DATE
+       WHERE id = $1
+       RETURNING *`,
+      [id]
+    );
+
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({
+        erro: "Colaborador não encontrado",
+      });
+    }
+
+    res.json({
+      mensagem: "Colaborador desligado com sucesso!",
+      colaborador: resultado.rows[0],
+    });
+  } catch (erro) {
+    console.error(erro);
+
+    res.status(500).json({
+      erro: "Erro ao desligar colaborador",
+    });
+  }
+});
+
 // Iniciar servidor
 
 const PORT = 3001;
