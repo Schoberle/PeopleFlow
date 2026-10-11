@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
 import "./Colaborador.css";
 
 function VisualizarColaborador() {
@@ -10,20 +9,18 @@ function VisualizarColaborador() {
   const [colaborador, setColaborador] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
+  const [desligando, setDesligando] = useState(false);
 
   useEffect(() => {
     async function buscarColaborador() {
       try {
-        const resposta = await fetch(
-          `/api/colaboradores/${id}`
-        );
+        const resposta = await fetch(`/api/colaboradores/${id}`);
 
         if (!resposta.ok) {
           throw new Error("Colaborador não encontrado.");
         }
 
         const dados = await resposta.json();
-
         setColaborador(dados);
       } catch (error) {
         console.error("Erro ao buscar colaborador:", error);
@@ -44,6 +41,47 @@ function VisualizarColaborador() {
     });
   }
 
+  async function desligarColaborador() {
+    const confirmar = window.confirm(
+      `Tem certeza que deseja desligar o colaborador ${colaborador.nome}?`
+    );
+
+    if (!confirmar) {
+      return;
+    }
+
+    try {
+      setDesligando(true);
+
+      const resposta = await fetch(
+        `/api/colaboradores/${id}/desligar`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        throw new Error(
+          dados.erro || "Não foi possível desligar o colaborador."
+        );
+      }
+
+      setColaborador(dados.colaborador);
+
+      alert("Colaborador desligado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao desligar colaborador:", error);
+      alert(error.message);
+    } finally {
+      setDesligando(false);
+    }
+  }
+
   if (carregando) {
     return (
       <div className="colaborador-container">
@@ -59,7 +97,6 @@ function VisualizarColaborador() {
       <div className="colaborador-container">
         <div className="colaborador-erro">
           <h2>Ops!</h2>
-
           <p>{erro}</p>
 
           <button
@@ -75,9 +112,7 @@ function VisualizarColaborador() {
 
   return (
     <div className="colaborador-container">
-
       <div className="colaborador-header">
-
         <button
           className="btn-voltar-topo"
           onClick={() => navigate("/colaboradores")}
@@ -90,22 +125,17 @@ function VisualizarColaborador() {
         <p>
           Informações cadastrais do colaborador
         </p>
-
       </div>
 
       <div className="colaborador-card">
 
         <div className="colaborador-perfil">
-
           <div className="avatar">
             {colaborador.nome?.charAt(0).toUpperCase()}
           </div>
 
           <div className="perfil-info">
-
-            <h2>
-              {colaborador.nome}
-            </h2>
+            <h2>{colaborador.nome}</h2>
 
             <span
               className={`status ${
@@ -116,9 +146,7 @@ function VisualizarColaborador() {
             >
               {colaborador.status}
             </span>
-
           </div>
-
         </div>
 
         <div className="linha-separadora"></div>
@@ -127,43 +155,40 @@ function VisualizarColaborador() {
 
           <div className="campo">
             <span>CPF</span>
-            <strong>
-              {colaborador.cpf || "-"}
-            </strong>
+            <strong>{colaborador.cpf || "-"}</strong>
           </div>
 
           <div className="campo">
             <span>E-mail</span>
-            <strong>
-              {colaborador.email || "-"}
-            </strong>
+            <strong>{colaborador.email || "-"}</strong>
           </div>
 
           <div className="campo">
             <span>Telefone</span>
-            <strong>
-              {colaborador.telefone || "-"}
-            </strong>
+            <strong>{colaborador.telefone || "-"}</strong>
           </div>
 
           <div className="campo">
             <span>Cargo</span>
-            <strong>
-              {colaborador.cargo || "-"}
-            </strong>
+            <strong>{colaborador.cargo || "-"}</strong>
           </div>
 
           <div className="campo">
             <span>Departamento</span>
-            <strong>
-              {colaborador.setor || "-"}
-            </strong>
+            <strong>{colaborador.setor || "-"}</strong>
           </div>
 
           <div className="campo">
             <span>Data de admissão</span>
             <strong>
               {formatarData(colaborador.data_admissao)}
+            </strong>
+          </div>
+
+          <div className="campo">
+            <span>Data de desligamento</span>
+            <strong>
+              {formatarData(colaborador.data_desligamento)}
             </strong>
           </div>
 
@@ -187,10 +212,21 @@ function VisualizarColaborador() {
             ✏️ Editar colaborador
           </button>
 
+          {colaborador.status?.toLowerCase() === "ativo" && (
+            <button
+              className="btn-desligar"
+              onClick={desligarColaborador}
+              disabled={desligando}
+            >
+              {desligando
+                ? "Desligando..."
+                : "🔴 Desligar colaborador"}
+            </button>
+          )}
+
         </div>
 
       </div>
-
     </div>
   );
 }
