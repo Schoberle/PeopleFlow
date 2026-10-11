@@ -129,6 +129,55 @@
   word-break: break-word;
 }
 
+/* Área dos botões */
+.acoes-colaborador {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.acoes-colaborador button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-desligar {
+  background-color: #dc4545;
+  border-color: #dc4545;
+  color: #ffffff;
+}
+
+.acoes-colaborador .btn-desligar:hover:not(:disabled) {
+  background-color: #bd3030;
+  border-color: #bd3030;
+}
+
+.btn-desligar:focus-visible {
+  outline: 3px solid rgba(220, 69, 69, 0.25);
+  outline-offset: 2px;
+}
+
+.btn-desligar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .mensagem-carregando {
   padding: 30px;
   color: #718096;
@@ -189,5 +238,14 @@
 
   .status-badge {
     margin-left: 0;
+  }
+
+  .acoes-colaborador {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .acoes-colaborador button {
+    width: 100%;
   }
 }

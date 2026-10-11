@@ -1,8 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Sidebar from "../components/Sidebar.jsx";
-
 import "./Colaboradores.css";
 
 function Colaboradores() {
@@ -10,47 +10,69 @@ function Colaboradores() {
 
   const [colaboradores, setColaboradores] = useState([]);
   const [pesquisa, setPesquisa] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState("Todos");
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
     async function buscarColaboradores() {
       try {
-        const resposta = await fetch(
-          "/api/colaboradores"
-        );
+        setErro("");
+
+        const resposta = await fetch("/api/colaboradores");
 
         if (!resposta.ok) {
-          throw new Error("Erro ao buscar colaboradores");
+          throw new Error("Não foi possível carregar os colaboradores.");
         }
 
         const dados = await resposta.json();
-
-        console.log("Colaboradores recebidos:", dados);
-
-        setColaboradores(dados);
+        setColaboradores(Array.isArray(dados) ? dados : []);
       } catch (erro) {
         console.error("Erro ao buscar colaboradores:", erro);
+        setErro("Não foi possível carregar os colaboradores. Tente novamente.");
+      } finally {
+        setCarregando(false);
       }
     }
 
     buscarColaboradores();
   }, []);
 
-  const colaboradoresFiltrados = colaboradores.filter(
+  const colaboradoresFiltrados = colaboradores.filter((colaborador) => {
+    const termo = pesquisa.trim().toLowerCase();
+
+    const correspondePesquisa = [
+      colaborador.nome,
+      colaborador.cpf,
+      colaborador.cargo,
+      colaborador.setor,
+    ].some((campo) =>
+      String(campo ?? "").toLowerCase().includes(termo)
+    );
+
+    const status = String(colaborador.status ?? "").toLowerCase();
+
+    const correspondeStatus =
+      filtroStatus === "Todos" ||
+      (filtroStatus === "Ativos" && status === "ativo") ||
+      (filtroStatus === "Desligados" && status === "desligado");
+
+    return correspondePesquisa && correspondeStatus;
+  });
+
+  const totalAtivos = colaboradores.filter(
     (colaborador) =>
-      colaborador.nome
-        ?.toLowerCase()
-        .includes(pesquisa.toLowerCase())
-  );
+      String(colaborador.status ?? "").toLowerCase() === "ativo"
+  ).length;
+
+  const totalDesligados = colaboradores.filter(
+    (colaborador) =>
+      String(colaborador.status ?? "").toLowerCase() === "desligado"
+  ).length;
 
   function visualizarColaborador(id) {
-    console.log("Cliquei em Ver. ID recebido:", id);
-
     if (!id) {
-      console.error(
-        "ERRO: o colaborador não possui ID:",
-        id
-      );
-
+      console.error("Colaborador sem ID.");
       return;
     }
 
@@ -59,138 +81,167 @@ function Colaboradores() {
 
   return (
     <div className="colaboradores-layout">
-
       <Sidebar />
 
       <main className="colaboradores-page">
-
         <div className="page-header">
-
           <div>
             <h1>Colaboradores</h1>
-
-            <p>
-              Gerencie os colaboradores da empresa
-            </p>
+            <p>Gerencie os colaboradores da empresa</p>
           </div>
 
           <button
             className="btn-novo"
             type="button"
-            onClick={() =>
-              navigate("/cadastro-colaborador")
-            }
+            onClick={() => navigate("/cadastro-colaborador")}
           >
-            + Novo Colaborador
+            + Novo colaborador
           </button>
-
         </div>
 
-        <div className="search-container">
+        <section className="resumo-colaboradores">
+          <article className="resumo-card">
+            <span className="resumo-label">Total de colaboradores</span>
+            <strong>{colaboradores.length}</strong>
+          </article>
 
-          <input
-            type="text"
-            placeholder="🔍 Pesquisar colaborador..."
-            value={pesquisa}
-            onChange={(event) =>
-              setPesquisa(event.target.value)
-            }
-          />
+          <article className="resumo-card resumo-ativos">
+            <span className="resumo-label">Ativos</span>
+            <strong>{totalAtivos}</strong>
+          </article>
 
-        </div>
+          <article className="resumo-card resumo-desligados">
+            <span className="resumo-label">Desligados</span>
+            <strong>{totalDesligados}</strong>
+          </article>
+        </section>
 
-        <div className="table-container">
+        <section className="filtros-colaboradores">
+          <div className="search-container">
+            <label htmlFor="pesquisa-colaborador">
+              Buscar colaborador
+            </label>
 
-          <table>
+            <input
+              id="pesquisa-colaborador"
+              type="search"
+              placeholder="Pesquise por nome, CPF, cargo ou departamento..."
+              value={pesquisa}
+              onChange={(event) => setPesquisa(event.target.value)}
+            />
+          </div>
 
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>CPF</th>
-                <th>Cargo</th>
-                <th>Departamento</th>
-                <th>Status</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
+          <div className="filtro-status">
+            <label htmlFor="filtro-status">Filtrar por status</label>
 
-            <tbody>
+            <select
+              id="filtro-status"
+              value={filtroStatus}
+              onChange={(event) => setFiltroStatus(event.target.value)}
+            >
+              <option value="Todos">Todos os status</option>
+              <option value="Ativos">Ativos</option>
+              <option value="Desligados">Desligados</option>
+            </select>
+          </div>
+        </section>
 
-              {colaboradoresFiltrados.length > 0 ? (
+        <section className="lista-colaboradores">
+          <div className="lista-cabecalho">
+            <div>
+              <h2>Lista de colaboradores</h2>
+              <p>
+                {colaboradoresFiltrados.length}{" "}
+                {colaboradoresFiltrados.length === 1
+                  ? "colaborador encontrado"
+                  : "colaboradores encontrados"}
+              </p>
+            </div>
+          </div>
 
-                colaboradoresFiltrados.map(
-                  (colaborador) => (
+          {erro && (
+            <div className="mensagem-erro" role="alert">
+              {erro}
+            </div>
+          )}
 
-                    <tr key={colaborador.id}>
-
-                      <td>
-                        {colaborador.nome}
-                      </td>
-
-                      <td>
-                        {colaborador.cpf}
-                      </td>
-
-                      <td>
-                        {colaborador.cargo}
-                      </td>
-
-                      <td>
-                        {colaborador.setor}
-                      </td>
-
-                      <td>
-
-                        <span className="status-badge">
-                          {colaborador.status}
-                        </span>
-
-                      </td>
-
-                      <td>
-
-                        <button
-                          className="btn-acao"
-                          type="button"
-                          onClick={() =>
-                            visualizarColaborador(
-                              colaborador.id
-                            )
-                          }
-                        >
-                          Ver
-                        </button>
-
-                      </td>
-
-                    </tr>
-
-                  )
-                )
-
-              ) : (
-
+          <div className="table-container">
+            <table>
+              <thead>
                 <tr>
-
-                  <td
-                    colSpan="6"
-                    className="empty-message"
-                  >
-                    Nenhum colaborador cadastrado
-                  </td>
-
+                  <th>Nome</th>
+                  <th>CPF</th>
+                  <th>Cargo</th>
+                  <th>Departamento</th>
+                  <th>Status</th>
+                  <th>Ações</th>
                 </tr>
+              </thead>
 
-              )}
+              <tbody>
+                {carregando ? (
+                  <tr>
+                    <td colSpan="6" className="empty-message">
+                      Carregando colaboradores...
+                    </td>
+                  </tr>
+                ) : colaboradoresFiltrados.length > 0 ? (
+                  colaboradoresFiltrados.map((colaborador) => {
+                    const desligado =
+                      String(colaborador.status ?? "").toLowerCase() ===
+                      "desligado";
 
-            </tbody>
+                    return (
+                      <tr key={colaborador.id}>
+                        <td className="nome-colaborador">
+                          {colaborador.nome || "—"}
+                        </td>
 
-          </table>
+                        <td>{colaborador.cpf || "—"}</td>
+                        <td>{colaborador.cargo || "—"}</td>
+                        <td>{colaborador.setor || "—"}</td>
 
-        </div>
+                        <td>
+                          <span
+                            className={`status-badge ${
+                              desligado
+                                ? "status-desligado"
+                                : "status-ativo"
+                            }`}
+                          >
+                            <span aria-hidden="true">●</span>{" "}
+                            {colaborador.status || "Não informado"}
+                          </span>
+                        </td>
 
+                        <td>
+                          <button
+                            className="btn-acao"
+                            type="button"
+                            onClick={() =>
+                              visualizarColaborador(colaborador.id)
+                            }
+                          >
+                            Ver detalhes
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="empty-message">
+                      {colaboradores.length === 0
+                        ? "Nenhum colaborador cadastrado."
+                        : "Nenhum colaborador corresponde aos filtros selecionados."}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
       </main>
-
     </div>
   );
 }

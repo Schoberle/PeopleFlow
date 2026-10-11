@@ -1,3 +1,5 @@
+/* CONTAINER PRINCIPAL */
+
 .colaborador-container {
   min-height: 100vh;
   background: #f4f6f9;
@@ -54,7 +56,7 @@
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.07);
 }
 
-/* PERFIL */
+/* PERFIL DO COLABORADOR */
 
 .colaborador-perfil {
   display: flex;
@@ -120,11 +122,11 @@
   margin: 35px 0;
 }
 
-/* INFORMAÇÕES */
+/* INFORMAÇÕES DO COLABORADOR */
 
 .informacoes {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px 25px;
 }
 
@@ -159,31 +161,99 @@
   word-break: break-word;
 }
 
-/* RODAPÉ */
+/* RODAPÉ E BOTÕES */
 
 .rodape-card {
   margin-top: 35px;
   padding-top: 25px;
   border-top: 1px solid #e5e7eb;
   display: flex;
+  align-items: center;
   justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.btn-voltar {
-  border: none;
-  background: #374151;
-  color: #ffffff;
+/* PADRÃO COMPARTILHADO DOS BOTÕES */
+
+.rodape-card button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 43px;
   padding: 12px 20px;
+  margin: 0;
+  box-sizing: border-box;
+  border: 1px solid transparent;
   border-radius: 8px;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
-  transition: 0.2s;
+  transition: background-color 0.2s, border-color 0.2s,
+    transform 0.2s;
+}
+
+/* BOTÃO VOLTAR */
+
+.btn-voltar {
+  background: #374151;
+  border-color: #374151;
+  color: #ffffff;
 }
 
 .btn-voltar:hover {
   background: #1f2937;
+  border-color: #1f2937;
   transform: translateY(-1px);
+}
+
+/* BOTÃO EDITAR */
+
+.btn-editar {
+  background: #667eea;
+  border-color: #667eea;
+  color: #ffffff;
+}
+
+.btn-editar:hover {
+  background: #5563d6;
+  border-color: #5563d6;
+  transform: translateY(-1px);
+}
+
+/* BOTÃO DESLIGAR */
+
+.btn-desligar {
+  background: #dc4545;
+  border-color: #dc4545;
+  color: #ffffff;
+}
+
+.btn-desligar:hover:not(:disabled) {
+  background: #bd3030;
+  border-color: #bd3030;
+  transform: translateY(-1px);
+}
+
+.btn-desligar:focus-visible {
+  outline: 3px solid rgba(220, 69, 69, 0.25);
+  outline-offset: 2px;
+}
+
+.btn-desligar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* FOCO DOS BOTÕES */
+
+.rodape-card button:focus-visible {
+  outline: 3px solid rgba(102, 126, 234, 0.3);
+  outline-offset: 2px;
 }
 
 /* CARREGAMENTO */
@@ -263,6 +333,16 @@
     min-width: 65px;
     font-size: 26px;
   }
+
+  .rodape-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .rodape-card button {
+    width: 100%;
+  }
 }
 
 /* CELULARES PEQUENOS */
@@ -286,38 +366,5 @@
 
   .campo {
     padding: 14px;
-  }
-
-  .btn-voltar {
-    width: 100%;
-  }
-}
-.btn-editar {
-  border: none;
-  background: #667eea;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
-  margin-left: 10px;
-}
-
-.btn-editar:hover {
-  background: #5563d6;
-  transform: translateY(-1px);
-}
-
-@media (max-width: 700px) {
-  .rodape-card {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .btn-editar {
-    width: 100%;
-    margin-left: 0;
   }
 }
