@@ -1,23 +1,17 @@
+
 require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
+const createDashboardRouter = require("./dashboard");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-app.use((req, res, next) => {
-  if (req.url.startsWith("/api/")) {
-    req.url = req.url.replace("/api", "");
-  }
-  next();
-});
-
 // Conexão com PostgreSQL
-
 const pool = new Pool(
   process.env.DATABASE_URL
     ? {
@@ -35,8 +29,19 @@ const pool = new Pool(
       }
 );
 
-// Teste da API
+// Middleware para remover /api das requisições
+app.use((req, res, next) => {
+  if (req.url.startsWith("/api/")) {
+    req.url = req.url.replace("/api", "");
+  }
 
+  next();
+});
+
+// Rota do Dashboard
+app.use("/dashboard", createDashboardRouter(pool));
+
+// Teste da API
 app.get("/", (req, res) => {
   res.json({
     mensagem: "Servidor PeopleFlow funcionando!",
@@ -44,7 +49,6 @@ app.get("/", (req, res) => {
 });
 
 // Teste da conexão com o banco
-
 app.get("/teste-banco", async (req, res) => {
   try {
     const resultado = await pool.query("SELECT NOW()");
@@ -63,7 +67,6 @@ app.get("/teste-banco", async (req, res) => {
 });
 
 // Cadastrar colaborador
-
 app.post("/colaboradores", async (req, res) => {
   try {
     const {
@@ -108,7 +111,6 @@ app.post("/colaboradores", async (req, res) => {
 });
 
 // Buscar todos os colaboradores
-
 app.get("/colaboradores", async (req, res) => {
   try {
     const resultado = await pool.query(
@@ -126,7 +128,6 @@ app.get("/colaboradores", async (req, res) => {
 });
 
 // Buscar um colaborador pelo ID
-
 app.get("/colaboradores/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -153,7 +154,6 @@ app.get("/colaboradores/:id", async (req, res) => {
 });
 
 // Atualizar colaborador
-
 app.put("/colaboradores/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -249,7 +249,6 @@ app.put("/colaboradores/:id/desligar", async (req, res) => {
 });
 
 // Iniciar servidor
-
 const PORT = 3001;
 
 app.listen(PORT, () => {
