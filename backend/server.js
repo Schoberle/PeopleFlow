@@ -3,15 +3,19 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const { Pool } = require("pg");
+
 const createDashboardRouter = require("./dashboard");
+const { router: authRouter, requireAuth } = require("./auth");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
-// Conexão com PostgreSQL
+// Conexão com PostgreSQL / Neon
 const pool = new Pool(
   process.env.DATABASE_URL
     ? {
@@ -29,17 +33,44 @@ const pool = new Pool(
       }
 );
 
-// Middleware para remover /api das requisições
+// Disponibilizar conexão com banco para as rotas
+app.use((req, res, next) => {
+  req.pool = pool;
+  next();
+});
+
+// Remover /api antes de registrar as rotas
 app.use((req, res, next) => {
   if (req.url.startsWith("/api/")) {
-    req.url = req.url.replace("/api", "");
+    req.url = req.url.replace(/^\/api/, "");
   }
 
   next();
 });
 
-// Rota do Dashboard
-app.use("/dashboard", createDashboardRouter(pool));
+// ======================================
+// ROTAS DE AUTENTICAÇÃO
+// ======================================
+
+app.use("/auth", authRouter);
+
+// ======================================
+// ROTAS PROTEGIDAS
+// ======================================
+
+// Dashboard
+app.use(
+  "/dashboard",
+  requireAuth,
+  createDashboardRouter(pool)
+);
+
+// Todas as operações de colaboradores
+app.use("/colaboradores", requireAuth);
+
+// ======================================
+// ROTAS PÚBLICAS
+// ======================================
 
 // Teste da API
 app.get("/", (req, res) => {
@@ -65,6 +96,10 @@ app.get("/teste-banco", async (req, res) => {
     });
   }
 });
+
+// ======================================
+// COLABORADORES
+// ======================================
 
 // Cadastrar colaborador
 app.post("/colaboradores", async (req, res) => {
@@ -127,7 +162,7 @@ app.get("/colaboradores", async (req, res) => {
   }
 });
 
-// Buscar um colaborador pelo ID
+// Buscar colaborador pelo ID
 app.get("/colaboradores/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -248,8 +283,11 @@ app.put("/colaboradores/:id/desligar", async (req, res) => {
   }
 });
 
-// Iniciar servidor
-const PORT = 3001;
+// ======================================
+// INICIAR SERVIDOR
+// ======================================
+
+const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
