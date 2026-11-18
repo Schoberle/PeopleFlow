@@ -1,4 +1,11 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import { useEffect, useState } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -7,41 +14,84 @@ import CadastroColaborador from "./pages/CadastroColaborador";
 import VisualizarColaborador from "./pages/VisualizarColaborador";
 import EditarColaborador from "./pages/EditarColaborador";
 
+function RotaProtegida({ children }) {
+  const [autenticado, setAutenticado] = useState(null);
+
+  useEffect(() => {
+    async function verificarSessao() {
+      try {
+        const resposta = await fetch("/api/auth/me", {
+          credentials: "include",
+        });
+
+        setAutenticado(resposta.ok);
+      } catch {
+        setAutenticado(false);
+      }
+    }
+
+    verificarSessao();
+  }, []);
+
+  if (autenticado === null) {
+    return <p>Verificando autenticação...</p>;
+  }
+
+  return autenticado ? children : <Navigate to="/" replace />;
+}
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-
-        <Route
-          path="/"
-          element={<Login />}
-        />
+        <Route path="/" element={<Login />} />
 
         <Route
           path="/dashboard"
-          element={<Dashboard />}
+          element={
+            <RotaProtegida>
+              <Dashboard />
+            </RotaProtegida>
+          }
         />
 
         <Route
           path="/colaboradores"
-          element={<Colaboradores />}
+          element={
+            <RotaProtegida>
+              <Colaboradores />
+            </RotaProtegida>
+          }
         />
 
         <Route
           path="/cadastro-colaborador"
-          element={<CadastroColaborador />}
+          element={
+            <RotaProtegida>
+              <CadastroColaborador />
+            </RotaProtegida>
+          }
         />
 
         <Route
           path="/colaborador/:id"
-          element={<VisualizarColaborador />}
+          element={
+            <RotaProtegida>
+              <VisualizarColaborador />
+            </RotaProtegida>
+          }
         />
 
         <Route
           path="/editar-colaborador/:id"
-          element={<EditarColaborador />}
+          element={
+            <RotaProtegida>
+              <EditarColaborador />
+            </RotaProtegida>
+          }
         />
 
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
