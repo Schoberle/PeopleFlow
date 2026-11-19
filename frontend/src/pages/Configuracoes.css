@@ -1,0 +1,154 @@
+
+.pagina-configuracoes {
+  padding: 30px;
+  width: 100%;
+  box-sizing: border-box;
+  color: #2f3640;
+}
+
+.configuracoes-cabecalho {
+  margin-bottom: 30px;
+}
+
+.configuracoes-cabecalho h1 {
+  font-size: 26px;
+  margin: 0 0 8px;
+}
+
+.configuracoes-cabecalho p {
+  color: #777;
+  margin: 0;
+  font-size: 14px;
+}
+
+.config-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 25px;
+  margin-bottom: 22px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.config-card-titulo {
+  margin-bottom: 25px;
+}
+
+.config-card-titulo h2 {
+  font-size: 18px;
+  margin: 0 0 7px;
+}
+
+.config-card-titulo p {
+  color: #777;
+  font-size: 13px;
+  margin: 0;
+}
+
+.config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 550px;
+}
+
+.config-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.config-campo label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+}
+
+.config-campo input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #dcdcdc;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.config-campo input:focus {
+  border-color: #2f3640;
+}
+
+.config-campo input:disabled {
+  background: #f3f4f6;
+  color: #777;
+  cursor: not-allowed;
+}
+
+.config-botao {
+  background: #2f3640;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background 0.2s;
+}
+
+.config-botao:hover {
+  background: #454e5a;
+}
+
+.config-mensagem {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.config-mensagem.sucesso {
+  color: #218838;
+}
+
+.config-mensagem.erro {
+  color: #c0392b;
+  margin-bottom: 20px;
+}
+
+.config-sistema {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.config-sistema div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.config-sistema span {
+  color: #777;
+  font-size: 13px;
+}
+
+.config-sistema strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .pagina-configuracoes {
+    padding: 18px;
+  }
+
+  .config-card {
+    padding: 18px;
+  }
+
+  .config-sistema {
+    grid-template-columns: 1fr;
+  }
+}

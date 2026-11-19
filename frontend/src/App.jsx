@@ -13,6 +13,8 @@ import Colaboradores from "./pages/Colaboradores";
 import CadastroColaborador from "./pages/CadastroColaborador";
 import VisualizarColaborador from "./pages/VisualizarColaborador";
 import EditarColaborador from "./pages/EditarColaborador";
+import Ferias from "./pages/Ferias";
+import Configuracoes from "./pages/Configuracoes";
 
 function RotaProtegida({ children }) {
   const [autenticado, setAutenticado] = useState(null);
@@ -91,7 +93,28 @@ function App() {
           }
         />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route
+          path="/ferias"
+          element={
+            <RotaProtegida>
+              <Ferias />
+            </RotaProtegida>
+          }
+        />
+
+                  <Route
+          path="/configuracoes"
+          element={
+            <RotaProtegida>
+              <Configuracoes />
+            </RotaProtegida>
+          }
+        />
+
+        <Route
+          path="*"
+          element={<Navigate to="/" replace />}
+        />
       </Routes>
     </BrowserRouter>
   );

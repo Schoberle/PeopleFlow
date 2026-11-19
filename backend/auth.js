@@ -6,16 +6,13 @@ const jwt = require("jsonwebtoken");
 const router = express.Router();
 
 const COOKIE_NAME = "peopleflow_token";
-const SESSION_DURATION = 8 * 60 * 60 * 1000;
 
 function getJwtSecret() {
-  const secret = process.env.JWT_SECRET;
-
-  if (!secret || secret.length < 32) {
-    throw new Error("JWT_SECRET não configurado corretamente.");
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET não configurado.");
   }
 
-  return secret;
+  return process.env.JWT_SECRET;
 }
 
 function cookieOptions() {
@@ -24,11 +21,11 @@ function cookieOptions() {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_DURATION,
+    maxAge: 8 * 60 * 60 * 1000,
   };
 }
 
-// Criar tabela e administrador inicial
+// Criar administrador inicial, caso não exista
 async function initializeAdmin(pool) {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS usuarios (
@@ -41,50 +38,44 @@ async function initializeAdmin(pool) {
   `);
 
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const password = process.env.ADMIN_INITIAL_PASSWORD;
 
-  if (!email) {
-    throw new Error("ADMIN_EMAIL não configurado.");
+  if (!email || !password) {
+    throw new Error(
+      "ADMIN_EMAIL e ADMIN_INITIAL_PASSWORD precisam estar configurados."
+    );
   }
 
-  const existing = await pool.query(
-    "SELECT id FROM usuarios WHERE LOWER(email) = LOWER($1)",
-    [email]
-  );
-
-  if (existing.rows.length > 0) {
-    return;
-  }
-
-  const initialPassword = process.env.ADMIN_INITIAL_PASSWORD;
-
-  if (!initialPassword || Buffer.byteLength(initialPassword, "utf8") < 12) {
+  if (Buffer.byteLength(password, "utf8") < 12) {
     throw new Error(
       "ADMIN_INITIAL_PASSWORD precisa ter pelo menos 12 bytes."
     );
   }
 
-  if (Buffer.byteLength(initialPassword, "utf8") > 72) {
-    throw new Error("A senha inicial excede o limite suportado pelo bcrypt.");
-  }
-
-  const passwordHash = await bcrypt.hash(initialPassword, 12);
-
-  await pool.query(
-    `INSERT INTO usuarios (email, password_hash, role)
-     VALUES ($1, $2, 'admin')
-     ON CONFLICT (email) DO NOTHING`,
-    [email, passwordHash]
+  const resultado = await pool.query(
+    "SELECT id FROM usuarios WHERE LOWER(email) = LOWER($1)",
+    [email]
   );
+
+  if (resultado.rows.length === 0) {
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    await pool.query(
+      `INSERT INTO usuarios (email, password_hash, role)
+       VALUES ($1, $2, 'admin')`,
+      [email, passwordHash]
+    );
+  }
 }
 
-// Middleware de autenticação
+// Proteção das rotas
 function requireAuth(req, res, next) {
   try {
     const token = req.cookies?.[COOKIE_NAME];
 
     if (!token) {
       return res.status(401).json({
-        erro: "Acesso não autorizado."
+        erro: "Não autenticado."
       });
     }
 
@@ -92,7 +83,7 @@ function requireAuth(req, res, next) {
 
     if (decoded.role !== "admin") {
       return res.status(403).json({
-        erro: "Permissão insuficiente."
+        erro: "Acesso não autorizado."
       });
     }
 
@@ -113,28 +104,20 @@ function requireAuth(req, res, next) {
 // Login
 router.post("/login", async (req, res) => {
   try {
-    const { email, senha } = req.body;
-
-    if (!email || !senha || typeof email !== "string" || typeof senha !== "string") {
-      return res.status(400).json({
-        erro: "Informe e-mail e senha."
-      });
-    }
-
-    if (Buffer.byteLength(senha, "utf8") > 72) {
-      return res.status(401).json({
-        erro: "E-mail ou senha incorretos."
-      });
-    }
-
     await initializeAdmin(req.pool);
 
+    const email = req.body.email?.trim().toLowerCase();
+    const senha = req.body.senha;
+
+    if (!email || !senha) {
+      return res.status(400).json({
+        erro: "Informe o e-mail e a senha."
+      });
+    }
+
     const resultado = await req.pool.query(
-      `SELECT id, email, password_hash, role
-       FROM usuarios
-       WHERE LOWER(email) = LOWER($1)
-       LIMIT 1`,
-      [email.trim()]
+      "SELECT * FROM usuarios WHERE LOWER(email) = LOWER($1)",
+      [email]
     );
 
     if (resultado.rows.length === 0) {
@@ -150,7 +133,7 @@ router.post("/login", async (req, res) => {
       usuario.password_hash
     );
 
-    if (!senhaValida || usuario.role !== "admin") {
+    if (!senhaValida) {
       return res.status(401).json({
         erro: "E-mail ou senha incorretos."
       });
@@ -188,23 +171,158 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Consultar sessão
-router.get("/me", requireAuth, (req, res) => {
-  res.json({
+// Verificar sessão atual
+router.get("/me", requireAuth, async (req, res) => {
+  return res.json({
     autenticado: true,
     usuario: req.user,
   });
 });
 
+// Atualizar e-mail do administrador
+router.put("/perfil", requireAuth, async (req, res) => {
+  try {
+    const email = req.body.email?.trim().toLowerCase();
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({
+        erro: "Informe um e-mail válido."
+      });
+    }
+
+    const existente = await req.pool.query(
+      `SELECT id FROM usuarios
+       WHERE LOWER(email) = LOWER($1) AND id <> $2`,
+      [email, req.user.id]
+    );
+
+    if (existente.rows.length > 0) {
+      return res.status(409).json({
+        erro: "Este e-mail já está em uso."
+      });
+    }
+
+    const resultado = await req.pool.query(
+      `UPDATE usuarios
+       SET email = $1
+       WHERE id = $2
+       RETURNING id, email, role`,
+      [email, req.user.id]
+    );
+
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({
+        erro: "Administrador não encontrado."
+      });
+    }
+
+    const usuario = resultado.rows[0];
+
+    const token = jwt.sign(
+      {
+        email: usuario.email,
+        role: usuario.role,
+      },
+      getJwtSecret(),
+      {
+        subject: String(usuario.id),
+        expiresIn: "8h",
+      }
+    );
+
+    res.cookie(COOKIE_NAME, token, cookieOptions());
+
+    return res.json({
+      mensagem: "E-mail atualizado com sucesso!",
+      usuario,
+    });
+
+  } catch (error) {
+    console.error("Erro ao atualizar perfil:", error);
+
+    return res.status(500).json({
+      erro: "Não foi possível atualizar o perfil."
+    });
+  }
+});
+
+// Alterar senha do administrador
+router.patch("/senha", requireAuth, async (req, res) => {
+  try {
+    const { senhaAtual, novaSenha } = req.body;
+
+    if (
+      typeof senhaAtual !== "string" ||
+      typeof novaSenha !== "string" ||
+      !senhaAtual ||
+      !novaSenha
+    ) {
+      return res.status(400).json({
+        erro: "Informe a senha atual e a nova senha."
+      });
+    }
+
+    const tamanhoSenha = Buffer.byteLength(novaSenha, "utf8");
+
+    if (tamanhoSenha < 12 || tamanhoSenha > 72) {
+      return res.status(400).json({
+        erro: "A nova senha deve ter entre 12 e 72 bytes."
+      });
+    }
+
+    const resultado = await req.pool.query(
+      "SELECT password_hash FROM usuarios WHERE id = $1",
+      [req.user.id]
+    );
+
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({
+        erro: "Administrador não encontrado."
+      });
+    }
+
+    const senhaValida = await bcrypt.compare(
+      senhaAtual,
+      resultado.rows[0].password_hash
+    );
+
+    if (!senhaValida) {
+      return res.status(401).json({
+        erro: "A senha atual está incorreta."
+      });
+    }
+
+    const novoHash = await bcrypt.hash(novaSenha, 12);
+
+    await req.pool.query(
+      "UPDATE usuarios SET password_hash = $1 WHERE id = $2",
+      [novoHash, req.user.id]
+    );
+
+    return res.json({
+      mensagem: "Senha alterada com sucesso!"
+    });
+
+  } catch (error) {
+    console.error("Erro ao alterar senha:", error);
+
+    return res.status(500).json({
+      erro: "Não foi possível alterar a senha."
+    });
+  }
+});
+
 // Logout
 router.post("/logout", (req, res) => {
   res.clearCookie(COOKIE_NAME, {
-    ...cookieOptions(),
-    maxAge: undefined,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
   });
 
-  res.json({
-    mensagem: "Logout realizado com sucesso!"
+  return res.json({
+    mensagem: "Logout realizado com sucesso."
   });
 });
 

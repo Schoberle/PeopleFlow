@@ -1,0 +1,51 @@
+
+.form-ferias {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  padding: 25px;
+}
+
+.form-ferias div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-ferias label {
+  font-weight: 600;
+  color: #444;
+  font-size: 14px;
+}
+
+.form-ferias input,
+.form-ferias select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.form-ferias button {
+  justify-self: start;
+}
+
+.mensagem-sucesso {
+  margin: 0 25px 20px;
+  color: #218838;
+  font-weight: 600;
+}
+
+.mensagem-erro {
+  margin: 15px 25px;
+  color: #c0392b;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .form-ferias {
+    grid-template-columns: 1fr;
+  }
+}

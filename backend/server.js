@@ -8,6 +8,7 @@ const { Pool } = require("pg");
 
 const createDashboardRouter = require("./dashboard");
 const { router: authRouter, requireAuth } = require("./auth");
+const createFeriasRouter = require("./ferias");
 
 const app = express();
 
@@ -67,6 +68,9 @@ app.use(
 
 // Todas as operações de colaboradores
 app.use("/colaboradores", requireAuth);
+
+// Férias
+app.use("/ferias", requireAuth, createFeriasRouter(pool));
 
 // ======================================
 // ROTAS PÚBLICAS
